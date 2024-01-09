@@ -9,6 +9,8 @@
   </head>
   <body>
     <button id="btnConnect">Connect</button>
+    <div id="hrm">HRM: </div>
+    <button id="win">Win</button>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
@@ -670,6 +672,23 @@ Bangle.on('swipe', function(directionLR) {
   Bluetooth.println(msg.join(","));
 });
 
+Bangle.setHRMPower(1);
+Bangle.on('HRM',function(hrm) {
+  let d = [
+    "H",
+    hrm.bpm,
+    hrm.confidence
+    ];
+  Bluetooth.println(d.join(","));
+});
+`
+
+const WIN_CODE = `
+g.clear();
+g.setFontAlign(0,0);
+g.setFont("Vector",80);
+g.drawString("WIN", g.getWidth()/2, g.getHeight()/2);
+Bangle.setLCDPower(1);
 `
 
 // When we click the connect button...
@@ -705,8 +724,13 @@ document.getElementById("btnConnect").addEventListener("click", function() {
           function() { console.log("Ready..."); });
       }, 1500);
     });
+
+    document.getElementById("win").addEventListener("click", function() {
+      connection.write("\x03\x10if(1){"+WIN_CODE+"}\n", function() {});
+    });
   });
 });
+
 
 // When we get a line of data, check it and if it's
 // from the accelerometer, update it
@@ -717,9 +741,13 @@ function onLine(line) {
   if (d.length==2 && d[0]=="R") {
     // we have an accelerometer reading
     var direction = parseInt(d[1]);    
+  } else if (d.length==3 && d[0]=="H") {
+    // we have an accelerometer reading
+    var hrm = parseInt(d[1]);    
   }
 
   gameInstance.SendMessage('Handle', 'RotateHandle', direction);
+  document.getElementById("hrm").innerHTML = "HRM: " + hrm;
 }
 
 </script>
