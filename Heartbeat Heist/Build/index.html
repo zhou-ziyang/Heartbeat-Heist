@@ -10,6 +10,7 @@
   <body>
     <button id="btnConnect">Connect</button>
     <div id="hrm">HRM: </div>
+    <button id="win">Win</button>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
@@ -620,6 +621,8 @@ ChangeLog:
 // `;
 
 var BANGLE_CODE = `
+
+Bangle.setLCDPower(1);
 const radius = 6;
 const offset = 10;
 const r_step = 10;
@@ -661,23 +664,55 @@ draw_handles(angle);
 //const interval = setInterval(countDown, 100);
 
 Bangle.on('swipe', function(directionLR) {
+  if (Math.abs(angle) % 360 == 180){
+    dur = 200;
+    inten = 0.2;
+    freq = 2000;
+  }
+  else {
+    dur = 200;
+    inten = 0.7;
+    freq = 7000;
+  }
   if (directionLR == 1) {
     clockwise();
+    Bangle.beep(dur, freq);
+    Bangle.buzz(dur, inten);
   } else if (directionLR == -1) {
     counterclockwise();
+    Bangle.beep(dur, freq);
+    Bangle.buzz(dur, inten);
   }
   
   msg = ["R", directionLR];
   Bluetooth.println(msg.join(","));
 });
 
+Bangle.setHRMPower(1);
+Bangle.on('HRM',function(hrm) {
+  let d = [
+    "H",
+    hrm.bpm,
+    hrm.confidence
+    ];
+  Bluetooth.println(d.join(","));
+});
+`
+
+const WIN_CODE = `
+Bangle.setLCDPower(1);
+g.clear();
+g.setFontAlign(0,0);
+g.setFont("Vector",80);
+g.drawString("WIN", g.getWidth()/2, g.getHeight()/2);
+Bangle.setLCDPower(1);
 `
 
 // When we click the connect button...
 var connection;
 document.getElementById("btnConnect").addEventListener("click", function() {
   // disconnect if connected already
-  if (connection) {
+  if (connection) { 
     connection.close();
     connection = undefined;
   }
@@ -706,8 +741,13 @@ document.getElementById("btnConnect").addEventListener("click", function() {
           function() { console.log("Ready..."); });
       }, 1500);
     });
+
+    document.getElementById("win").addEventListener("click", function() {
+      connection.write("\x03\x10if(1){"+WIN_CODE+"}\n", function() {});
+    });
   });
 });
+
 
 // When we get a line of data, check it and if it's
 // from the accelerometer, update it
@@ -718,7 +758,7 @@ function onLine(line) {
   if (d.length==2 && d[0]=="R") {
     // we have an accelerometer reading
     var direction = parseInt(d[1]);    
-  } else if d.length==3 && d[0]=="H") {
+  } else if (d.length==3 && d[0]=="H") {
     // we have an accelerometer reading
     var hrm = parseInt(d[1]);    
   }
