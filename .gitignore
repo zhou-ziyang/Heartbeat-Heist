@@ -2,15 +2,8 @@
 .DS_Store
 
 # ignore all Unity files
-Heartbeat Heist/Assets/*
-Heartbeat Heist/.plastic/*
-Heartbeat Heist/Library/*
-Heartbeat Heist/ProjectSettings/*
-Heartbeat Heist/Temp/*
-Heartbeat Heist/.vs/*
-Heartbeat Heist/Logs/*
-Heartbeat Heist/obj/*
-Heartbeat Heist/Packages/*
-Heartbeat Heist/UserSettings/*
-Heartbeat Heist/Assembly-CSharp.csproj
-Heartbeat Heist/Heartbeat Heist.sln
+*
+
+# Allow specific files
+!/Build/index.html
+!README.md
