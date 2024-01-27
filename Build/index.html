@@ -15,6 +15,10 @@
     <button id="win">Win</button>
     <button id="saveData" onclick="saveDummy('')">Save Data</button>
     <div id="buttonContainer"></div>
+    <label class="switch">
+      <span class="slider">Sound</span>
+      <input id="sound" type="checkbox">
+    </label>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
@@ -128,7 +132,8 @@
       document.body.appendChild(script);
 
     </script>
-    
+
+    </script>
     <script>
 // Code to upload to Bangle.js
 // var BANGLE_CODE = `
@@ -142,6 +147,7 @@
 //   Bluetooth.println(d.join(","));
 // })
 // `;
+
 
 var BANGLE_CODE = `
 
@@ -256,16 +262,22 @@ Bangle.on('swipe', function(directionLR) {
     }
     if (directionLR == 1) {
         clockwise();
-        //Bangle.beep(dur, freq);
+        if (sound) {
+          console.log("beep");
+          Bangle.beep(dur, freq);
+        }
         Bangle.buzz(dur, inten);
     } else if (directionLR == -1) {
         counterclockwise();
-        //Bangle.beep(dur, freq);
+        if (sound) {
+          console.log("beep");
+          Bangle.beep(dur, freq);
+        }
         Bangle.buzz(dur, inten);
     }
     
-    msg = ["R", Math.abs(angle) % 360];
-    Bluetooth.println(msg.join(","));
+    Rmsg = ["R", angle % 360];
+    Bluetooth.println(Rmsg.join(","));
 });
 
 setWatch(() => {
@@ -329,7 +341,9 @@ document.getElementById("btnConnect").addEventListener("click", function() {
       // Wait for it to reset itself
       setTimeout(function() {
         // Now upload our code to it
-        connection.write("\x03\x10if(1){"+BANGLE_CODE+"}\n",
+        let sound = document.getElementById("sound").checked;
+        console.log("Sound: " + sound);
+        connection.write("\x03\x10if(1){"+ `let sound = ` + sound.toString() + BANGLE_CODE+"}\n",
           function() { console.log("Ready..."); });
       }, 1500);
     });
@@ -349,8 +363,8 @@ function onLine(line) {
   var d = line.split(",");
   if (d.length==2 && d[0]=="R") {
     // we have an accelerometer reading
-    var angle = parseInt(d[1]);
-    gameInstance.SendMessage('Game', 'Rotate', angle);
+    var gameAngle = parseInt(d[1]);
+    gameInstance.SendMessage('Game', 'Rotate', gameAngle);
   } else if (d.length==3 && d[0]=="H") {
     // we have an accelerometer reading
     var hrm = parseInt(d[1]);    
