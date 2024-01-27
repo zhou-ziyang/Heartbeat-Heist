@@ -273,8 +273,8 @@ Bangle.on('swipe', function(directionLR) {
         Bangle.buzz(dur, inten);
     }
     
-    msg = ["R", Math.abs(angle) % 360];
-    Bluetooth.println(msg.join(","));
+    Rmsg = ["R", angle % 360];
+    Bluetooth.println(Rmsg.join(","));
 });
 
 setWatch(() => {
@@ -360,8 +360,8 @@ function onLine(line) {
   var d = line.split(",");
   if (d.length==2 && d[0]=="R") {
     // we have an accelerometer reading
-    var angle = parseInt(d[1]);
-    gameInstance.SendMessage('Game', 'Rotate', angle);
+    var gameAngle = parseInt(d[1]);
+    gameInstance.SendMessage('Game', 'Rotate', gameAngle);
   } else if (d.length==3 && d[0]=="H") {
     // we have an accelerometer reading
     var hrm = parseInt(d[1]);    
