@@ -6,4 +6,5 @@
 
 # Allow specific files
 !/Build/index.html
+!/Build/puck.js
 !README.md
