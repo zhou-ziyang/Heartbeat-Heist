@@ -741,7 +741,7 @@ Bangle.on('swipe', function(directionLR) {
         Bangle.buzz(dur, inten);
     }
     
-    msg = ["R", directionLR];
+    msg = ["R", Math.abs(angle) % 360];
     Bluetooth.println(msg.join(","));
 });
 
@@ -826,8 +826,8 @@ function onLine(line) {
   var d = line.split(",");
   if (d.length==2 && d[0]=="R") {
     // we have an accelerometer reading
-    var direction = parseInt(d[1]);    
-    console.log(direction);
+    var angle = parseInt(d[1]);
+    gameInstance.SendMessage('Game', 'Rotate', angle);
   } else if (d.length==3 && d[0]=="H") {
     // we have an accelerometer reading
     var hrm = parseInt(d[1]);    
@@ -843,13 +843,6 @@ function onLine(line) {
     gameInstance.SendMessage('Game', 'Confirm');
   } else if (d[0]=="W") { 
     gameInstance.SendMessage('Game', 'Finish');
-  }
-
-  if (direction == -1){
-    gameInstance.SendMessage('Game', 'Left');
-  }
-  else if (direction == 1){
-    gameInstance.SendMessage('Game', 'Right');
   }
   
   document.getElementById("hrm").innerHTML = "HRM: " + hrm;
