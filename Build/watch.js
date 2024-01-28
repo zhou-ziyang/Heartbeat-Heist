@@ -92,21 +92,21 @@ function stepUp(){
     if (step == STEPS - 1) {
         if (level == LEVELS - 1){
             if (correctSteps >= STEPS && passedLevels >= LEVELS - 1) {
-                msg = ["Finish", level, step, 1];
+                msg = ["MSG", "Finish", level, step, 1];
                 Bluetooth.println(msg.join(","));
             }
             else {
-                msg = ["Finish", level, step, 0];
+                msg = ["MSG", "Finish", level, step, 0];
                 Bluetooth.println(msg.join(","));
             }
         }
         else {
             if (correctSteps >= STEPS) {
-                msg = ["PassUp", level, step];
+                msg = ["MSG", "PassUp", level, step];
                 Bluetooth.println(msg.join(","));
             }
             else {
-                msg = ["FailUp", level, step];
+                msg = ["MSG", "FailUp", level, step];
                 Bluetooth.println(msg.join(","));
             }
         }
@@ -119,7 +119,7 @@ function stepUp(){
 
 function stepUpPass(){
     correctSteps++;
-    msg = ["Result", level, step, 1];
+    msg = ["MSG", "Result", level, step, 1];
     Bluetooth.println(msg.join(","));
 }
 
@@ -161,32 +161,35 @@ Bangle.on('swipe', function(directionLR) {
     //   Bangle.beep(dur, freq);
     // }
     Bangle.buzz(dur, inten);
-    Rmsg = ["R", level, step, angle, freq / 15];
+    Rmsg = ["MSG", "R", level, step, angle, freq / 15];
     Bluetooth.println(Rmsg.join(","));
 });
 
 setWatch(() => {
-    msg = ["P", "button"];
+    msg = ["MSG", "P", "button"];
     Bluetooth.println(msg.join(","));
-    let k = orders[level][step];
-    let t = angles[k];
-    // let a = Math.abs(angle) - r_step
-    // if (t == (Math.abs(a) % 360)) {
-    //   stepUpPass();
-    // }
-    if (t == angle) {
-        stepUpPass();
+    if (level < LEVELS && step < STEPS) {
+        let k = orders[level][step];
+        let t = angles[k];
+        // let a = Math.abs(angle) - r_step
+        // if (t == (Math.abs(a) % 360)) {
+        //   stepUpPass();
+        // }
+        if (t == angle) {
+            stepUpPass();
+        }
+        else { 
+            msg = ["MSG", "Result", level, step, 0];
+            Bluetooth.println(msg.join(","));
+        }
+        stepUp();
     }
-    else { 
-        msg = ["Result", level, step, 0];
-        Bluetooth.println(msg.join(","));
-    }
-    stepUp();
   }, BTN2, {repeat:true});
 
 Bangle.setHRMPower(1);
 Bangle.on('HRM',function(hrm) {
   let d = [
+    "MSG",
     "H",
     level,
     step,
@@ -263,41 +266,41 @@ window.onload = function () {
         let levelStep;
 
         var d = line.split(",");
-        if (d[0] === "R") {
-            gameLevel = parseInt(d[1]);
-            levelStep = parseInt(d[2]);
-            var gameAngle = parseInt(d[3]);
+        if (d[1] === "R") {
+            gameLevel = parseInt(d[2]);
+            levelStep = parseInt(d[3]);
+            var gameAngle = parseInt(d[4]);
             gameInstance.SendMessage('Game', 'Rotate', -gameAngle);
-            var freq = parseInt(d[4]);
+            var freq = parseInt(d[5]);
             gameInstance.SendMessage('Game', 'PlayTone', freq);
             log(gameLevel + "," + levelStep + "," + "Action,R");
-        } else if (d[0] === "H") {
-            gameLevel = parseInt(d[1]);
-            levelStep = parseInt(d[2]);
-            var hrm = parseInt(d[3]);
+        } else if (d[1] === "H") {
+            gameLevel = parseInt(d[2]);
+            levelStep = parseInt(d[3]);
+            var hrm = parseInt(d[4]);
             log(gameLevel + "," + levelStep + ",HRM," + hrm);
-        } else if (d[0] === "PassUp") {
-            gameLevel = parseInt(d[1]);
-            levelStep = parseInt(d[2]);
+        } else if (d[1] === "PassUp") {
+            gameLevel = parseInt(d[2]);
+            levelStep = parseInt(d[3]);
             console.log("Level " + gameLevel + " Failed. Level up.");
             gameInstance.SendMessage('Game', 'PassTo', gameLevel + 1);
-        } else if (d[0] === "FailUp") {
-            gameLevel = parseInt(d[1]);
-            levelStep = parseInt(d[2]);
+        } else if (d[1] === "FailUp") {
+            gameLevel = parseInt(d[2]);
+            levelStep = parseInt(d[3]);
             console.log("Level " + gameLevel + " Failed. Level up.");
             gameInstance.SendMessage('Game', 'FailTo', gameLevel + 1);
-        } else if (d[0] === "Result") {
-            gameLevel = parseInt(d[1]);
-            levelStep = parseInt(d[2]);
-            const result = parseInt(d[3]);
+        } else if (d[1] === "Result") {
+            gameLevel = parseInt(d[2]);
+            levelStep = parseInt(d[3]);
+            const result = parseInt(d[4]);
             console.log("Result: " + result);
             log(gameLevel + "," + levelStep + ",Result," + result);
-        } else if (d[0] === "P") {
+        } else if (d[1] === "P") {
             gameInstance.SendMessage('Game', 'Confirm');
-        } else if (d[0] === "Finish") {
-            gameLevel = parseInt(d[1]);
-            levelStep = parseInt(d[2]);
-            const win = parseInt(d[3]);
+        } else if (d[1] === "Finish") {
+            gameLevel = parseInt(d[2]);
+            levelStep = parseInt(d[3]);
+            const win = parseInt(d[4]);
             gameInstance.SendMessage('Game', 'Finish', win);
             if (win === 1) {
                 connection.write("\x03\x10if(1){" + WIN_CODE + "}\n", function () {});
