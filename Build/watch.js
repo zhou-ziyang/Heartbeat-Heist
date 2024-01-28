@@ -21,6 +21,9 @@ const r_step = 15;
 let level = 0;
 let step = 0;
 let correctSteps = 0;
+let passedLevels = 0;
+const LEVELS = 4;
+const STEPS = 4;
 
 // Targets array
 let targets = [8, 5, 11, 16];
@@ -77,38 +80,47 @@ function counterclockwise() {
   draw(angle);
 }
 
+function levelUp() {
+
+}
+
+function levelUpPass(){
+    passedLevels++;
+}
+
 function stepUp(){
-    step = step + 1;
-    if (step > 3) {
-        step = 0;
-        level++;
-        angle = 0;
-        if (level > 3){
-            msg = ["W", "win"];
-            Bluetooth.println(msg.join(","));
-            msg = ["P", 0];
-            Bluetooth.println(msg.join(","));
-        }
-        else if (correctSteps > 3){
-            msg = ["LP", level];
-            Bluetooth.println(msg.join(","));
-            msg = ["P", 0];
-            Bluetooth.println(msg.join(","));
+    if (step == STEPS - 1) {
+        if (level == LEVELS - 1){
+            if (correctSteps >= STEPS && passedLevels >= LEVELS - 1) {
+                msg = ["Finish", level, step, 1];
+                Bluetooth.println(msg.join(","));
+            }
+            else {
+                msg = ["Finish", level, step, 0];
+                Bluetooth.println(msg.join(","));
+            }
         }
         else {
-            msg = ["LF", level];
-            Bluetooth.println(msg.join(","));
-            msg = ["P", 1];
-            Bluetooth.println(msg.join(","));
+            if (correctSteps >= STEPS) {
+                msg = ["PassUp", level, step];
+                Bluetooth.println(msg.join(","));
+            }
+            else {
+                msg = ["FailUp", level, step];
+                Bluetooth.println(msg.join(","));
+            }
         }
-    } else {
-        msg = ["P", 1];
-        Bluetooth.println(msg.join(","));
+        level++;
+        angle = 0;
+        draw(angle);
     }
+    step = (step + 1) % STEPS;
 }
 
 function stepUpPass(){
     correctSteps++;
+    msg = ["Result", level, step, 1];
+    Bluetooth.println(msg.join(","));
 }
 
 g.clear();
@@ -137,7 +149,7 @@ Bangle.on('swipe', function(directionLR) {
     if (target == angle) {
         dur = 200 - (level * 100);
         inten = 1.0 - (level * 0.1);
-        freq = 2000 + (level * 1000);
+        freq = 5300 + (level * 500);
     }
     else {
         dur = 150;
@@ -149,13 +161,13 @@ Bangle.on('swipe', function(directionLR) {
     //   Bangle.beep(dur, freq);
     // }
     Bangle.buzz(dur, inten);
-    Rmsg = ["R", angle, freq / 15];
+    Rmsg = ["R", level, step, angle, freq / 15];
     Bluetooth.println(Rmsg.join(","));
 });
 
 setWatch(() => {
-    // msg = ["P", "button"];
-    // Bluetooth.println(msg.join(","));
+    msg = ["P", "button"];
+    Bluetooth.println(msg.join(","));
     let k = orders[level][step];
     let t = angles[k];
     // let a = Math.abs(angle) - r_step
@@ -163,16 +175,21 @@ setWatch(() => {
     //   stepUpPass();
     // }
     if (t == angle) {
-      stepUpPass();
+        stepUpPass();
+    }
+    else { 
+        msg = ["Result", level, step, 0];
+        Bluetooth.println(msg.join(","));
     }
     stepUp();
-    //setTimeout(()=>g.clear(), 1000);
   }, BTN2, {repeat:true});
 
 Bangle.setHRMPower(1);
 Bangle.on('HRM',function(hrm) {
   let d = [
     "H",
+    level,
+    step,
     hrm.bpm,
     hrm.confidence
     ];
@@ -185,6 +202,15 @@ g.clear();
 g.setFontAlign(0,0);
 g.setFont("Vector",80);
 g.drawString("WIN", g.getWidth()/2, g.getHeight()/2);
+Bangle.setLCDPower(1);
+`
+
+const LOSE_CODE = `
+Bangle.setLCDPower(1);
+g.clear();
+g.setFontAlign(0,0);
+g.setFont("Vector",80);
+g.drawString("OOPS", g.getWidth()/2, g.getHeight()/2);
 Bangle.setLCDPower(1);
 `
 
@@ -234,32 +260,50 @@ window.onload = function () {
     function onLine(line) {
         console.log(line);
         let gameLevel;
+        let levelStep;
 
         var d = line.split(",");
-        if (d.length === 3 && d[0] === "R") {
-            // we have an accelerometer reading
-            var gameAngle = parseInt(d[1]);
+        if (d[0] === "R") {
+            gameLevel = parseInt(d[1]);
+            levelStep = parseInt(d[2]);
+            var gameAngle = parseInt(d[3]);
             gameInstance.SendMessage('Game', 'Rotate', -gameAngle);
-            var freq = parseInt(d[2]);
+            var freq = parseInt(d[4]);
             gameInstance.SendMessage('Game', 'PlayTone', freq);
-        } else if (d.length === 3 && d[0] === "H") {
-            // we have an accelerometer reading
-            var hrm = parseInt(d[1]);
-        } else if (d[0] === "LP") {
+            log(gameLevel + "," + levelStep + "," + "Action,R");
+        } else if (d[0] === "H") {
             gameLevel = parseInt(d[1]);
-            console.log("Game Level: " + gameLevel);
-            gameInstance.SendMessage('Game', 'PassTo', gameLevel);
-        } else if (d[0] === "LF") {
+            levelStep = parseInt(d[2]);
+            var hrm = parseInt(d[3]);
+            log(gameLevel + "," + levelStep + ",HRM," + hrm);
+        } else if (d[0] === "PassUp") {
             gameLevel = parseInt(d[1]);
-            console.log("Game Level: " + gameLevel);
-            gameInstance.SendMessage('Game', 'FailTo', gameLevel);
-        } else if (d[0] === "P" && d[1] === 1) {
+            levelStep = parseInt(d[2]);
+            console.log("Level " + gameLevel + " Failed. Level up.");
+            gameInstance.SendMessage('Game', 'PassTo', gameLevel + 1);
+        } else if (d[0] === "FailUp") {
+            gameLevel = parseInt(d[1]);
+            levelStep = parseInt(d[2]);
+            console.log("Level " + gameLevel + " Failed. Level up.");
+            gameInstance.SendMessage('Game', 'FailTo', gameLevel + 1);
+        } else if (d[0] === "Result") {
+            gameLevel = parseInt(d[1]);
+            levelStep = parseInt(d[2]);
+            const result = parseInt(d[3]);
+            console.log("Result: " + result);
+            log(gameLevel + "," + levelStep + ",Result," + result);
+        } else if (d[0] === "P") {
             gameInstance.SendMessage('Game', 'Confirm');
-        } else if (d[0] === "W") {
-            // if (d[0] === "win") {
-            gameInstance.SendMessage('Game', 'Finish', 1);
-            connection.write("\x03\x10if(1){" + WIN_CODE + "}\n", function () {});
-            // }
+        } else if (d[0] === "Finish") {
+            gameLevel = parseInt(d[1]);
+            levelStep = parseInt(d[2]);
+            const win = parseInt(d[3]);
+            gameInstance.SendMessage('Game', 'Finish', win);
+            if (win === 1) {
+                connection.write("\x03\x10if(1){" + WIN_CODE + "}\n", function () {});
+            } else {
+                connection.write("\x03\x10if(1){" + LOSE_CODE + "}\n", function () {});
+            }
         }
 
         // document.getElementById("hrm").innerHTML = "HRM: " + hrm;
