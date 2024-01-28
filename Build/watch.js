@@ -142,17 +142,17 @@ function swipeEvent() {
     let target = angles[i];
     console.log("Target: " + target);
     console.log("Angle: " + angle);
-    let freqs = [6000, 6500, 6850, 6920]
+    let freqs = [6000, 6500, 6800, 6900]
     let freq;
     let dur;
     let inten;
     if (target == angle) {
-        dur = 200 - (level * 100);
-        inten = 1.0 - (level * 0.1);
+        dur = 200 - (level * 20);
+        inten = 1 - (level * 0.1);
         freq = 6700 + (level * 75);
     }
     else {
-        dur = 150;
+        dur = 110;
         inten = 0.2;
         freq = 7000;
     }
@@ -299,12 +299,12 @@ window.onload = function () {
         } else if (d[1] === "PassUp") {
             gameLevel = parseInt(d[2]);
             levelStep = parseInt(d[3]);
-            console.log("Level " + gameLevel + " Failed. Level up.");
+            console.log("Level " + gameLevel + " passed. Level up.");
             gameInstance.SendMessage('Game', 'PassTo', gameLevel + 1);
         } else if (d[1] === "FailUp") {
             gameLevel = parseInt(d[2]);
             levelStep = parseInt(d[3]);
-            console.log("Level " + gameLevel + " Failed. Level up.");
+            console.log("Level " + gameLevel + " failed. Level up.");
             gameInstance.SendMessage('Game', 'FailTo', gameLevel + 1);
         } else if (d[1] === "Result") {
             gameLevel = parseInt(d[2]);
