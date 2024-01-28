@@ -11,16 +11,16 @@
     <script src="watch.js"></script>
   </head>
   <body>
+  <label class="switch">
+    <span class="slider">Buzz</span>
+    <input id="buzz" type="checkbox">
+  </label>
     <button id="btnConnect">Connect</button>
 <!--    <div id="hrm">HRM: </div>-->
 <!--    <button id="win">Win</button>-->
 <!--    <button id="saveData" onclick="saveDummy('')">Save Data</button>-->
     <textarea id="dataArea" name="dataArea" rows="4" cols="50">Timestamp,Level,Try,Type,Value</textarea>
     <button id="btnExport" onclick="exportData()">Save As</button>
-<!--    <label class="switch">-->
-<!--      <span class="slider">Sound</span>-->
-<!--      <input id="sound" type="checkbox">-->
-<!--    </label>-->
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
       <div id="unity-loading-bar">

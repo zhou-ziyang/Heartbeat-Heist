@@ -29,6 +29,9 @@ const STEPS = 4;
 let targets = [8, 5, 11, 16];
 let angles = [120, 75, 165, 240];
 
+let redo = 0;
+const MAX_REDO = 2;
+
 // Orders 2D array
 let orders = [
     [0, 3, 1, 2],
@@ -89,6 +92,7 @@ function levelUpPass(){
 }
 
 function stepUp(){
+    redo = 0;
     if (step == STEPS - 1) {
         if (level == LEVELS - 1){
             if (correctSteps >= STEPS && passedLevels >= LEVELS - 1) {
@@ -104,6 +108,7 @@ function stepUp(){
             if (correctSteps >= STEPS) {
                 msg = ["MSG", "PassUp", level, step];
                 Bluetooth.println(msg.join(","));
+                levelUpPass();
             }
             else {
                 msg = ["MSG", "FailUp", level, step];
@@ -130,39 +135,46 @@ draw_handles(angle);
 draw_arrow();
 //const interval = setInterval(countDown, 100);
 
-Bangle.on('swipe', function(directionLR) {
-    if (directionLR == 1) {
-        clockwise();
-    } else if (directionLR == -1) {
-        counterclockwise();
-    }
-    
+function swipeEvent() {
     console.log("Step: " + step);  
     console.log("Level: " + level);
     let i = orders[level][step];
     let target = angles[i];
     console.log("Target: " + target);
     console.log("Angle: " + angle);
+    let freqs = [6000, 6500, 6850, 6920]
     let freq;
     let dur;
     let inten;
     if (target == angle) {
         dur = 200 - (level * 100);
         inten = 1.0 - (level * 0.1);
-        freq = 5300 + (level * 500);
+        freq = 6700 + (level * 75);
     }
     else {
         dur = 150;
         inten = 0.2;
         freq = 7000;
     }
-    // if (sound) {
-    //   console.log("beep");
-    //   Bangle.beep(dur, freq);
-    // }
-    Bangle.buzz(dur, inten);
+    if (buzz) {
+        Bangle.buzz(dur, inten);
+    }
     Rmsg = ["MSG", "R", level, step, angle, freq / 15];
     Bluetooth.println(Rmsg.join(","));
+}
+
+Bangle.on('swipe', function(directionLR) {
+    if (directionLR == 1) {
+        clockwise();
+        swipeEvent();
+        redo = Math.min(MAX_REDO, redo + 1);
+    } else if (directionLR == -1 && redo > 0) {
+        counterclockwise();
+        swipeEvent()
+        redo = Math.max(0, redo - 1)
+    }
+    
+
 });
 
 setWatch(() => {
@@ -171,10 +183,6 @@ setWatch(() => {
     if (level < LEVELS && step < STEPS) {
         let k = orders[level][step];
         let t = angles[k];
-        // let a = Math.abs(angle) - r_step
-        // if (t == (Math.abs(a) % 360)) {
-        //   stepUpPass();
-        // }
         if (t == angle) {
             stepUpPass();
         }
@@ -256,9 +264,9 @@ window.onload = function () {
                 // Wait for it to reset itself
                 setTimeout(function () {
                     // Now upload our code to it
-                    // let sound = document.getElementById("sound").checked;
-                    // console.log("Sound: " + sound);
-                    connection.write("\x03\x10if(1){" + BANGLE_CODE + "}\n",
+                    let buzz = document.getElementById("buzz").checked;
+                    console.log("Buzz: " + buzz);
+                    connection.write("\x03\x10if(1){" + "let buzz = " + buzz + ";" + BANGLE_CODE + "}\n",
                         function () {
                             console.log("Ready...");
                         });
@@ -310,6 +318,7 @@ window.onload = function () {
             gameLevel = parseInt(d[2]);
             levelStep = parseInt(d[3]);
             const win = parseInt(d[4]);
+            console.log("WIN? " + win)
             gameInstance.SendMessage('Game', 'Finish', win);
             if (win === 1) {
                 connection.write("\x03\x10if(1){" + WIN_CODE + "}\n", function () {});
