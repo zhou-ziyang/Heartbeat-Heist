@@ -142,14 +142,14 @@ function swipeEvent() {
     let target = angles[i];
     console.log("Target: " + target);
     console.log("Angle: " + angle);
-    let freqs = [6000, 6500, 6800, 6900]
+    let freqs = [6300, 6600, 6880, 6910]
     let freq;
     let dur;
     let inten;
     if (target == angle) {
         dur = 200 - (level * 20);
         inten = 1 - (level * 0.1);
-        freq = 6700 + (level * 75);
+        freq = freqs[level];
     }
     else {
         dur = 110;
