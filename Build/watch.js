@@ -217,6 +217,15 @@ g.drawString("OOPS", g.getWidth()/2, g.getHeight()/2);
 Bangle.setLCDPower(1);
 `
 
+const READY_CODE = `
+Bangle.setLCDPower(1);
+g.clear();
+g.setFontAlign(0,0);
+g.setFont("Vector",70);
+g.drawString("READY...", g.getWidth()/2, g.getHeight()/2);
+Bangle.setLCDPower(1);
+`
+
 // When we click the connect button...
 window.onload = function () {
     var connection;
