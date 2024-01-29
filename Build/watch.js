@@ -116,6 +116,7 @@ function stepUp(){
             }
         }
         level++;
+        correctSteps = 0;
         angle = 0;
         draw(angle);
     }
